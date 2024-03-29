@@ -27,7 +27,7 @@ def convert(req: func.HttpRequest) -> func.HttpResponse:
         #     base_url=None,
         #     print_html_to_stdout=False,
         # )
-        return func.HttpResponse(f"Markdown file path: {markdown_file_path}}")
+        return func.HttpResponse(f"Markdown file path: {markdown_file_path}")
     else:
         return func.HttpResponse(
              "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
