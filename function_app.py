@@ -1,6 +1,9 @@
 import azure.functions as func
 import logging
-from txt2pdf.core import txt2pdf
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
+from io import BytesIO
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
@@ -9,25 +12,31 @@ app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 def convert(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
-    markdown_file_path = req.params.get('md_file_path')
-    if not markdown_file_path:
+    md_content = req.params.get('md_content')
+    if not md_content:
         try:
             req_body = req.get_json()
         except ValueError:
             pass
         else:
-            markdown_file_path = req_body.get('markdown_file_path')
+            md_content = req_body.get('md_content')
 
-    if markdown_file_path:
-        # txt2pdf(
-        #     pdf_file_path="/home/ammon/PycharmProjects/MarkdownToPDF/output/output.pdf",
-        #     md_content=None,
-        #     md_file_path=markdown_file_path,
-        #     css_file_path=None,
-        #     base_url=None,
-        #     print_html_to_stdout=False,
-        # )
-        return func.HttpResponse(f"Markdown file path: {markdown_file_path}")
+    if md_content:
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        styles = getSampleStyleSheet()
+        flowables = [Paragraph(md_content, styles['Normal'])]
+
+        doc.build(flowables)
+        pdf = buffer.getvalue()
+        buffer.close()
+
+        headers = {
+            "Content-Disposition": "attachment;filename=example.pdf",
+            "Content-Type": "application/pdf"
+        }
+
+        return func.HttpResponse(pdf, headers=headers)
     else:
         return func.HttpResponse(
              "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
